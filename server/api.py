@@ -6,7 +6,7 @@ import struct
 import io
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes (you can restrict to certain domains if needed)
+CORS(app)
 
 WIDTH, HEIGHT = 1000, 1000
 
@@ -18,7 +18,6 @@ def convert_image():
         return jsonify({"error": "No image file provided"}), 400
     
     try:
-        # Open and process the image
         image = Image.open(file)
         image = image.convert("RGBA")
         pixels = list(image.getdata())
@@ -26,16 +25,13 @@ def convert_image():
         width, height = image.size
         compressed_data = compress_image(pixels, width, height)
         
-        # Generate a random filename using uuid
         random_filename = f"{uuid.uuid4().hex}.trt"
         
-        # Create the .trt file in memory (no saving on the server)
         trt_file = io.BytesIO()
         trt_file.write(struct.pack("HH", width, height))
         trt_file.write(compressed_data)
-        trt_file.seek(0)  # Move the pointer to the start of the file
+        trt_file.seek(0)
         
-        # Send the file as a downloadable .trt with the random filename
         return send_file(
             trt_file,
             mimetype='application/octet-stream',
@@ -53,24 +49,19 @@ def load_trt_file():
         return jsonify({"error": "No TRT file provided"}), 400
 
     try:
-        # Read the .trt file and extract data
         file_data = file.read()
         width, height = struct.unpack("HH", file_data[:4])
         compressed_data = file_data[4:]
         
-        # Decompress the image data
         pixels = decompress_image(compressed_data, width, height)
         
-        # Reconstruct the image
         image = Image.new("RGBA", (width, height))
         image.putdata([tuple(pixel) for row in pixels for pixel in row])
         
-        # Save the image to a BytesIO buffer as PNG
         img_io = io.BytesIO()
         image.save(img_io, 'PNG')
-        img_io.seek(0)  # Move to the beginning of the BytesIO buffer
+        img_io.seek(0)
         
-        # Send the PNG image back to the client
         return send_file(
             img_io,
             mimetype='image/png',
