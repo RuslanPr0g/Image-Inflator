@@ -13,7 +13,7 @@ convertButton.addEventListener('click', () => {
         alert('Please upload an image first.');
         return;
     }
-    
+
     const reader = new FileReader();
     reader.onload = function(event) {
         const img = new Image();
@@ -28,9 +28,12 @@ convertButton.addEventListener('click', () => {
             const trtData = createTRTFormat(img.width, img.height, compressedData);
 
             const blob = new Blob([trtData], { type: 'application/octet-stream' });
+
+            const filename = generateRandomFilename() + '.trt';
             const url = URL.createObjectURL(blob);
+
             downloadLink.href = url;
-            downloadLink.download = 'generated_image.trt';
+            downloadLink.download = filename;
             downloadLink.style.display = 'inline-block';
 
             alert('Image converted to TRT format! You can download it now.');
@@ -48,10 +51,12 @@ trtInput.addEventListener('change', () => {
     reader.onload = function(event) {
         const trtData = new Uint8Array(event.target.result);
         const { width, height, compressedData } = parseTRTFormat(trtData);
-        
+
         const pixels = decompressImage(compressedData, width, height);
         const newImageData = new ImageData(new Uint8ClampedArray(pixels), width, height);
-        
+
+        canvas.width = width;
+        canvas.height = height;
         ctx.putImageData(newImageData, 0, 0);
     };
     reader.readAsArrayBuffer(file);
@@ -84,14 +89,20 @@ function compressImage(data, width, height) {
 function decompressImage(compressedData, width, height) {
     const pixels = [];
     let i = 0;
+    const totalPixels = width * height;
 
-    while (i < compressedData.length) {
+    while (i < compressedData.length && pixels.length < totalPixels * 4) {
         const runLength = compressedData[i];
         const rgba = compressedData.slice(i + 1, i + 5);
         for (let j = 0; j < runLength; j++) {
             pixels.push(...rgba);
         }
         i += 5;
+    }
+
+    // Ensure the correct number of pixels (width * height)
+    while (pixels.length < totalPixels * 4) {
+        pixels.push(0, 0, 0, 255); // Fill with transparent black pixels
     }
 
     return pixels;
@@ -121,4 +132,8 @@ function parseTRTFormat(data) {
     const compressedData = data.slice(4);
 
     return { width, height, compressedData };
+}
+
+function generateRandomFilename() {
+    return 'image_' + Date.now();
 }
