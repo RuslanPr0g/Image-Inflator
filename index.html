@@ -8,11 +8,18 @@
 </head>
 <body>
     <div class="container">
-        <h1>Convert Image to Custom TRT Format</h1>
-        <input type="file" id="imageInput" accept="image/*" />
-        <button id="convertButton">Convert Image</button>
-        <button id="loadButton">Load and Display Image</button>
-        <canvas id="imageCanvas"></canvas>
+        <div class="block left-block">
+            <h2>Upload & Convert Image</h2>
+            <input type="file" id="imageInput" accept="image/*" />
+            <button id="convertButton">Convert to TRT</button>
+            <a id="downloadLink" href="#" style="display: none;">Download .trt File</a>
+        </div>
+        
+        <div class="block right-block">
+            <h2>Load & Display TRT Image</h2>
+            <input type="file" id="trtInput" accept=".trt" />
+            <canvas id="imageCanvas"></canvas>
+        </div>
     </div>
 
     <script src="script.js"></script>

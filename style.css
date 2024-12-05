@@ -1,8 +1,8 @@
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f0f0f0;
+    font-family: 'Arial', sans-serif;
     margin: 0;
     padding: 0;
+    background-color: #f5f7fa;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -10,26 +10,62 @@ body {
 }
 
 .container {
-    text-align: center;
+    display: flex;
+    justify-content: space-between;
+    width: 80%;
+    max-width: 1200px;
+}
+
+.block {
     background-color: white;
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    width: 400px;
+    width: 45%;
+    text-align: center;
 }
 
-h1 {
+h2 {
     margin-bottom: 20px;
+    color: #333;
 }
 
 input[type="file"], button {
-    margin: 10px 0;
     padding: 10px;
+    margin: 10px 0;
     font-size: 16px;
     cursor: pointer;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+a {
+    display: inline-block;
+    margin-top: 20px;
+    color: #4CAF50;
+    font-size: 16px;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
 }
 
 canvas {
     margin-top: 20px;
     border: 1px solid #ccc;
+    width: 100%;
+    max-width: 500px;
+    height: auto;
 }

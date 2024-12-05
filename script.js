@@ -1,6 +1,7 @@
 const convertButton = document.getElementById('convertButton');
-const loadButton = document.getElementById('loadButton');
+const trtInput = document.getElementById('trtInput');
 const imageInput = document.getElementById('imageInput');
+const downloadLink = document.getElementById('downloadLink');
 const canvas = document.getElementById('imageCanvas');
 const ctx = canvas.getContext('2d');
 
@@ -26,28 +27,34 @@ convertButton.addEventListener('click', () => {
             const compressedData = compressImage(imageData.data, img.width, img.height);
             const trtData = createTRTFormat(img.width, img.height, compressedData);
 
-            // Save to localStorage (simulating a file save)
-            localStorage.setItem('trtImage', trtData);
+            const blob = new Blob([trtData], { type: 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+            downloadLink.href = url;
+            downloadLink.download = 'generated_image.trt';
+            downloadLink.style.display = 'inline-block';
 
-            alert('Image converted and saved in TRT format!');
+            alert('Image converted to TRT format! You can download it now.');
         };
         img.src = event.target.result;
     };
     reader.readAsDataURL(file);
 });
 
-loadButton.addEventListener('click', () => {
-    const trtData = localStorage.getItem('trtImage');
-    if (!trtData) {
-        alert('No TRT data found!');
-        return;
-    }
+trtInput.addEventListener('change', () => {
+    const file = trtInput.files[0];
+    if (!file) return;
 
-    const { width, height, compressedData } = JSON.parse(trtData);
-    const pixels = decompressImage(compressedData, width, height);
-
-    const newImageData = new ImageData(new Uint8ClampedArray(pixels), width, height);
-    ctx.putImageData(newImageData, 0, 0);
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        const trtData = new Uint8Array(event.target.result);
+        const { width, height, compressedData } = parseTRTFormat(trtData);
+        
+        const pixels = decompressImage(compressedData, width, height);
+        const newImageData = new ImageData(new Uint8ClampedArray(pixels), width, height);
+        
+        ctx.putImageData(newImageData, 0, 0);
+    };
+    reader.readAsArrayBuffer(file);
 });
 
 function compressImage(data, width, height) {
@@ -95,5 +102,23 @@ function pixelsAreEqual(p1, p2) {
 }
 
 function createTRTFormat(width, height, compressedData) {
-    return JSON.stringify({ width, height, compressedData });
+    const header = new Uint8Array(4);
+    header[0] = width >> 8;
+    header[1] = width & 0xFF;
+    header[2] = height >> 8;
+    header[3] = height & 0xFF;
+
+    const combinedData = new Uint8Array(header.length + compressedData.length);
+    combinedData.set(header);
+    combinedData.set(compressedData, header.length);
+
+    return combinedData;
+}
+
+function parseTRTFormat(data) {
+    const width = (data[0] << 8) | data[1];
+    const height = (data[2] << 8) | data[3];
+    const compressedData = data.slice(4);
+
+    return { width, height, compressedData };
 }
