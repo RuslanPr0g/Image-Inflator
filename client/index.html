@@ -110,15 +110,12 @@
     <div class="container">
         <h1>🎨🖼️ Convert & Display Image Magic ✨📸</h1>
 
-        <!-- File Upload Form for Image and TRT File -->
         <div class="form-container">
-            <!-- Convert Image Section -->
             <div>
                 <input type="file" id="image-upload" accept="image/*">
                 <button id="convert-button">Convert Image</button>
             </div>
             
-            <!-- Load TRT File Section -->
             <div>
                 <input type="file" id="trt-upload" accept=".trt">
                 <button id="load-trt-button">Load TRT File</button>
@@ -127,11 +124,9 @@
 
         <br><br>
 
-        <!-- Display the Converted Image -->
         <h2>Converted Image</h2>
         <img alt="converted" id="converted-image">
         
-        <!-- Loading Indicator -->
         <div class="loading">
             <div class="spinner"></div>
             <p>Processing...</p>
@@ -139,14 +134,13 @@
     </div>
 
     <script>
-        const BASE_URL = "http://127.0.0.1:5000";  // Base URL for the Flask API
+        const BASE_URL = "http://127.0.0.1:5000";
         const loadingIndicator = document.querySelector('.loading');
         const convertButton = document.getElementById('convert-button');
         const loadTrtButton = document.getElementById('load-trt-button');
         const imageUpload = document.getElementById('image-upload');
         const trtUpload = document.getElementById('trt-upload');
 
-        // Show the loading indicator and disable interactions
         function startLoading() {
             loadingIndicator.classList.add('active');
             convertButton.classList.add('disabled');
@@ -155,7 +149,6 @@
             trtUpload.classList.add('disabled');
         }
 
-        // Hide the loading indicator and enable interactions
         function stopLoading() {
             loadingIndicator.classList.remove('active');
             convertButton.classList.remove('disabled');
@@ -164,9 +157,8 @@
             trtUpload.classList.remove('disabled');
         }
 
-        // Prevent page reload by preventing form submission behavior
         async function convertImage(event) {
-            event.preventDefault(); // Prevent page reload
+            event.preventDefault();
 
             const fileInput = document.getElementById('image-upload');
             const file = fileInput.files[0];
@@ -182,24 +174,22 @@
             try {
                 startLoading();
 
-                // Send the image to the backend for conversion
                 const response = await fetch(`${BASE_URL}/convert`, {
                     method: 'POST',
                     body: formData,
                 });
 
-                const data = await response.blob(); // Get the response as a Blob (the .trt file)
+                const data = await response.blob();
 
                 if (!response.ok) {
                     alert("Failed to convert the image.");
                     return;
                 }
 
-                // Create a download link for the .trt file
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(data);
-                link.download = `${Math.random(2, 17)}`.slice(2) + '_compressed.trt'; // The name is handled by the backend
-                link.click(); // Trigger the download
+                link.download = `${Math.random(2, 17)}`.slice(2) + '_compressed.trt';
+                link.click();
             } catch (error) {
                 console.error('Error:', error);
             } finally {
@@ -207,9 +197,8 @@
             }
         }
 
-        // Handle the file upload of TRT file and image display
         async function loadTrtFile(event) {
-            event.preventDefault(); // Prevent page reload
+            event.preventDefault();
 
             const fileInput = document.getElementById('trt-upload');
             const file = fileInput.files[0];
@@ -225,7 +214,6 @@
             try {
                 startLoading();
 
-                // Send the .trt file to the backend for processing
                 const response = await fetch(`${BASE_URL}/load-trt`, {
                     method: 'POST',
                     body: formData,
@@ -237,7 +225,6 @@
                     return;
                 }
 
-                // Display the image
                 const imageBlob = await response.blob();
                 const imageUrl = URL.createObjectURL(imageBlob);
                 const imageElement = document.getElementById("converted-image");
@@ -250,7 +237,6 @@
             }
         }
 
-        // Attach event listeners to buttons
         document.getElementById('convert-button').addEventListener('click', convertImage);
         document.getElementById('load-trt-button').addEventListener('click', loadTrtFile);
     </script>
