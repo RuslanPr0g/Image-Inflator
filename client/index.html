@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Converter</title>
+    <style>
+        /* Dark Mode Styles */
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1, h2 {
+            color: #fff;
+            text-align: center;
+        }
+
+        h2 {
+            margin-top: 30px;
+        }
+
+        input[type="file"], button {
+            background-color: #333;
+            color: #e0e0e0;
+            border: 1px solid #555;
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        input[type="file"]:focus, button:focus {
+            outline: none;
+            border-color: #888;
+        }
+
+        button:hover {
+            background-color: #555;
+        }
+
+        input[type="file"] {
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            margin: 10px auto;
+        }
+
+        #converted-image {
+            display: block;
+            margin: 20px auto;
+            max-width: 500px;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Convert and Display Image</h1>
+
+        <!-- File Upload Form for Image -->
+        <input type="file" id="image-upload" accept="image/*">
+        <button id="convert-button">Convert Image</button>
+        
+        <br><br>
+
+        <!-- File Upload Form for TRT File -->
+        <input type="file" id="trt-upload" accept=".trt">
+        <button id="load-trt-button">Load TRT File</button>
+
+        <br><br>
+
+        <!-- Display the Converted Image -->
+        <h2>Converted Image</h2>
+        <img id="converted-image" style="display: none;">
+    </div>
+
+    <script>
+        const BASE_URL = "http://127.0.0.1:5000";  // Base URL for the Flask API
+
+        // Prevent page reload by preventing form submission behavior
+        async function convertImage(event) {
+            event.preventDefault(); // Prevent page reload
+
+            const fileInput = document.getElementById('image-upload');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert("Please select an image.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("image", file);
+
+            try {
+                // Send the image to the backend for conversion
+                const response = await fetch(`${BASE_URL}/convert`, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const data = await response.blob(); // Get the response as a Blob (the .trt file)
+
+                if (!response.ok) {
+                    alert("Failed to convert the image.");
+                    return;
+                }
+
+                // Create a download link for the .trt file
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(data);
+                link.download = `${Math.random(2, 17)}`.slice(2) + '_compressed.trt'; // The name is handled by the backend
+                link.click(); // Trigger the download
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Handle the file upload of TRT file and image display
+        async function loadTrtFile(event) {
+            event.preventDefault(); // Prevent page reload
+
+            const fileInput = document.getElementById('trt-upload');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert("Please select a .trt file.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("trt_file", file);
+
+            try {
+                // Send the .trt file to the backend for processing
+                const response = await fetch(`${BASE_URL}/load-trt`, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    alert(data.error);
+                    return;
+                }
+
+                // Display the image
+                const imageBlob = await response.blob();
+                const imageUrl = URL.createObjectURL(imageBlob);
+                const imageElement = document.getElementById("converted-image");
+                imageElement.src = imageUrl;
+                imageElement.style.display = "block";
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Attach event listeners to buttons
+        document.getElementById('convert-button').addEventListener('click', convertImage);
+        document.getElementById('load-trt-button').addEventListener('click', loadTrtFile);
+    </script>
+</body>
+</html>
