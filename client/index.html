@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Converter</title>
+    <title>Image Improver</title>
     <style>
         /* Dark Mode Styles */
         body {
@@ -23,7 +23,27 @@
             margin-top: 30px;
         }
 
-        input[type="file"], button {
+        /* Container for the content */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Form Elements */
+        .form-container {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            max-width: 600px;
+            margin-top: 20px;
+            padding: 0 20px;
+        }
+
+        .form-container input[type="file"], .form-container button {
             background-color: #333;
             color: #e0e0e0;
             border: 1px solid #555;
@@ -31,62 +51,118 @@
             margin: 10px;
             border-radius: 5px;
             cursor: pointer;
+            width: 100%;
+            max-width: 200px;
         }
 
-        input[type="file"]:focus, button:focus {
+        .form-container input[type="file"]:focus, .form-container button:focus {
             outline: none;
             border-color: #888;
         }
 
-        button:hover {
+        .form-container button:hover {
             background-color: #555;
         }
 
-        input[type="file"] {
-            display: block;
-            width: 100%;
-            max-width: 300px;
-            margin: 10px auto;
-        }
-
+        /* Image display */
         #converted-image {
-            display: block;
+            display: none;
             margin: 20px auto;
             max-width: 500px;
             border-radius: 5px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
         }
 
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            text-align: center;
+        /* Loading Spinner Styles */
+        .loading {
+            display: none;
+            margin-top: 20px;
         }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Disabled state */
+        .disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Convert and Display Image</h1>
+        <h1>🎨🖼️ Convert & Display Image Magic ✨📸</h1>
 
-        <!-- File Upload Form for Image -->
-        <input type="file" id="image-upload" accept="image/*">
-        <button id="convert-button">Convert Image</button>
-        
-        <br><br>
-
-        <!-- File Upload Form for TRT File -->
-        <input type="file" id="trt-upload" accept=".trt">
-        <button id="load-trt-button">Load TRT File</button>
+        <!-- File Upload Form for Image and TRT File -->
+        <div class="form-container">
+            <!-- Convert Image Section -->
+            <div>
+                <input type="file" id="image-upload" accept="image/*">
+                <button id="convert-button">Convert Image</button>
+            </div>
+            
+            <!-- Load TRT File Section -->
+            <div>
+                <input type="file" id="trt-upload" accept=".trt">
+                <button id="load-trt-button">Load TRT File</button>
+            </div>
+        </div>
 
         <br><br>
 
         <!-- Display the Converted Image -->
         <h2>Converted Image</h2>
-        <img alt="converted" id="converted-image" style="display: none;">
+        <img alt="converted" id="converted-image">
+        
+        <!-- Loading Indicator -->
+        <div class="loading">
+            <div class="spinner"></div>
+            <p>Processing...</p>
+        </div>
     </div>
 
     <script>
         const BASE_URL = "http://127.0.0.1:5000";  // Base URL for the Flask API
+        const loadingIndicator = document.querySelector('.loading');
+        const convertButton = document.getElementById('convert-button');
+        const loadTrtButton = document.getElementById('load-trt-button');
+        const imageUpload = document.getElementById('image-upload');
+        const trtUpload = document.getElementById('trt-upload');
+
+        // Show the loading indicator and disable interactions
+        function startLoading() {
+            loadingIndicator.classList.add('active');
+            convertButton.classList.add('disabled');
+            loadTrtButton.classList.add('disabled');
+            imageUpload.classList.add('disabled');
+            trtUpload.classList.add('disabled');
+        }
+
+        // Hide the loading indicator and enable interactions
+        function stopLoading() {
+            loadingIndicator.classList.remove('active');
+            convertButton.classList.remove('disabled');
+            loadTrtButton.classList.remove('disabled');
+            imageUpload.classList.remove('disabled');
+            trtUpload.classList.remove('disabled');
+        }
 
         // Prevent page reload by preventing form submission behavior
         async function convertImage(event) {
@@ -94,7 +170,7 @@
 
             const fileInput = document.getElementById('image-upload');
             const file = fileInput.files[0];
-            
+
             if (!file) {
                 alert("Please select an image.");
                 return;
@@ -104,6 +180,8 @@
             formData.append("image", file);
 
             try {
+                startLoading();
+
                 // Send the image to the backend for conversion
                 const response = await fetch(`${BASE_URL}/convert`, {
                     method: 'POST',
@@ -124,6 +202,8 @@
                 link.click(); // Trigger the download
             } catch (error) {
                 console.error('Error:', error);
+            } finally {
+                stopLoading();
             }
         }
 
@@ -143,6 +223,8 @@
             formData.append("trt_file", file);
 
             try {
+                startLoading();
+
                 // Send the .trt file to the backend for processing
                 const response = await fetch(`${BASE_URL}/load-trt`, {
                     method: 'POST',
@@ -163,6 +245,8 @@
                 imageElement.style.display = "block";
             } catch (error) {
                 console.error('Error:', error);
+            } finally {
+                stopLoading();
             }
         }
 
